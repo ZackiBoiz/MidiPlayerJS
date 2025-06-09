@@ -883,6 +883,7 @@ var MidiPlayer = (function () {
     }, {
       key: "playLoop",
       value: function playLoop(dryRun) {
+        var hadEvent = false;
         if (!this.inLoop) {
           this.inLoop = true;
           this.tick = this.getCurrentTick();
@@ -894,6 +895,7 @@ var MidiPlayer = (function () {
               this.stop();
             } else {
               var event = track.handleEvent(this.tick, dryRun);
+              if (event) hadEvent = true;
 
               if (dryRun && event) {
                 if (event.hasOwnProperty('name') && event.name === 'Set Tempo') {
@@ -926,6 +928,7 @@ var MidiPlayer = (function () {
           });
           this.inLoop = false;
         }
+        return hadEvent;
       }
       /**
        * Setter for tempo.
@@ -963,7 +966,9 @@ var MidiPlayer = (function () {
         if (!this.startTime) this.startTime = new Date().getTime(); // Start play loop
         //window.requestAnimationFrame(this.playLoop.bind(this));
 
-        this.setIntervalId = setInterval(this.playLoop.bind(this), this.sampleRate); //this.setIntervalId = this.loop();
+        this.setIntervalId = setInterval(() => {
+    		  while (this.playLoop()) {}
+    		}, this.sampleRate);
 
         return this;
       }
